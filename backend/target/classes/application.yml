@@ -1,0 +1,54 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: order-processing-system
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  jpa:
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 25
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Resilience4j Retry Configuration for Optimistic Locking
+resilience4j:
+  retry:
+    instances:
+      inventoryRetry:
+        max-attempts: 5
+        wait-duration: 40ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 1.5
+        retry-exceptions:
+          - org.springframework.orm.ObjectOptimisticLockingFailureException
+          - jakarta.persistence.OptimisticLockException
+          - org.hibernate.StaleObjectStateException
+
+# Thread Pool Configuration
+order-processing:
+  thread-pool:
+    core-size: 4
+    max-size: 10
+    queue-capacity: 1000
+    keep-alive-seconds: 60
+  low-stock-threshold: 5
